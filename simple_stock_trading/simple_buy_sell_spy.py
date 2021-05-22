@@ -114,11 +114,9 @@ class simple_buy_sell_spy():
         
         
         #compute reward
-        # self.current_portfolio_value = self.cash + self.stock_quantity*\
-        #                                self.index_feature_dataframe.iloc[self.current_index][0]
-
-
-        # reward = (self.current_portfolio_value)/(self.index_feature_dataframe.iloc[self.current_index][0]*self.buy_and_hold_stock_quantity)
+        self.current_portfolio_value = self.cash + self.stock_quantity*\
+                                        self.index_feature_dataframe.iloc[self.current_index][0]
+        reward = (self.current_portfolio_value)/(self.index_feature_dataframe.iloc[self.current_index][0]*self.buy_and_hold_stock_quantity)
         # reward = (self.current_portfolio_value/self.index_feature_dataframe.iloc[self.current_index][0])/self.buy_and_hold_stock_quantity
         
         # return_reward = reward/self.previous_reward
@@ -144,10 +142,6 @@ class simple_buy_sell_spy():
         if execute_action and action == 1:
             return observation,reward
 
-
-        if final_step == True:
-            return observation,0
-        else:
-            return observation,0
+        return observation,0
 
         
