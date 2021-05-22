@@ -15,10 +15,11 @@ def sample_one_reward(theta,env,num_actions):
     for time_index in range(0,200):
         #compute an action given current observation
         action_distribution = utils.compute_action_distribution(theta, current_feature)
-        print("the action distribution is",action_distribution)
+        #print("the action distribution is",action_distribution)
         #action = np.argmax(action_distribution) This is not correct
-        action = np.random.binomial(1,action_distribution[0][1],1)[0]
-        print("the action is",action)
+        #action = np.random.binomial(1,action_distribution[0][1],1)[0]
+        action = np.random.choice(num_actions,1,p = action_distribution[0])[0]
+        #print("the action is",action)
         #apply the action to the environment
         observation, reward, done, info = env.step(action)
 
@@ -106,7 +107,7 @@ def train(N, T, delta):
 
 if __name__ == '__main__':
     np.random.seed(1234)
-    theta, episode_rewards = train(N=1, T=1, delta=1e-2)
+    theta, episode_rewards = train(N=100, T=20, delta=1e-2)
 
     # env = gym.make('CartPole-v0')
     # env.seed(12345)
