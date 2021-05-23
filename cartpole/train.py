@@ -109,26 +109,26 @@ if __name__ == '__main__':
     np.random.seed(1234)
     theta, episode_rewards = train(N=100, T=20, delta=1e-2)
 
-    # env = gym.make('CartPole-v0')
-    # env.seed(12345)
-    # observation = env.reset()
-    # num_actions = 2
-    # current_feature = utils.extract_features(observation, num_actions)
-    # for t in range(200):
-    #     env.render()
+    env = gym.make('CartPole-v0')
+    env.seed(12345)
+    observation = env.reset()
+    num_actions = 2
+    current_feature = utils.extract_features(observation, num_actions)
+    for t in range(200):
+        env.render()
 
-    #     #compute an action given current observation
-    #     action_distribution = utils.compute_action_distribution(theta, current_feature)
-    #     #action = np.argmax(action_distribution) This is not correct
-    #     action = np.random.binomial(1,action_distribution[0][1],1)[0]
-    #     #apply the action to the environment
-    #     observation, reward, done, info = env.step(action)
-    #     #compute the next feature vector
-    #     current_feature = utils.extract_features(observation, num_actions)
+        #compute an action given current observation
+        action_distribution = utils.compute_action_distribution(theta, current_feature)
+        #action = np.argmax(action_distribution) This is not correct
+        action = np.random.binomial(1,action_distribution[0][1],1)[0]
+        #apply the action to the environment
+        observation, reward, done, info = env.step(action)
+        #compute the next feature vector
+        current_feature = utils.extract_features(observation, num_actions)
 
-    #     if done:
-    #         print("Episode finished after {} timesteps".format(t+1))
-    #         break
+        if done:
+            print("Episode finished after {} timesteps".format(t+1))
+            break
 
 
     plt.plot(episode_rewards)

@@ -175,4 +175,14 @@ def compute_eta(delta, fisher, v_grad):
 
     regularizer = 1e-6
     denominator = np.transpose(v_grad)@np.linalg.inv(fisher)@v_grad+regularizer
+
+    try:
+        (delta/denominator)**(1/2)
+    except:
+        print('inside compute eta')
+        print('delta is',delta)
+        print('denominator is',denominator)
+        print('with no regularizer is',np.transpose(v_grad)@np.linalg.inv(fisher)@v_grad)
+
+
     return (delta/denominator)**(1/2)
