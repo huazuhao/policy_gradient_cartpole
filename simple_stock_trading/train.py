@@ -138,7 +138,7 @@ if __name__ == '__main__':
     best_episode_reward = float('-inf')
 
     for _ in range(0,1):
-        theta, episode_rewards = train(N=100, T=30, delta=1e-2)
+        theta, episode_rewards = train(N=100, T=100, delta=1e-2)
         if episode_rewards >= best_episode_reward:
             best_episode_reward = episode_rewards
             best_theta_so_far = theta

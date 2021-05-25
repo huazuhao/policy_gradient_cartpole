@@ -123,7 +123,7 @@ if __name__ == '__main__':
 
     # theta = best_theta_so_far
 
-    theta, episode_rewards = train(N=100, T=80, delta=1e-2)
+    theta, episode_rewards = train(N=100, T=100, delta=1e-2)
 
     visualize_time_length = 50
 
