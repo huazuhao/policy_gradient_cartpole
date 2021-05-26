@@ -54,6 +54,7 @@ def sample(theta, env, N):
     for _ in range(0,N):
         one_trajectory_reward,one_trajectory_grads = sample_one_reward(theta,env)
 
+
         total_grads.append(one_trajectory_grads)
         total_rewards.append(one_trajectory_reward)
 
@@ -99,8 +100,11 @@ def train(N, T, delta):
         step_size = utils.compute_eta(delta, fisher_matrix, value_function_gradient)
 
         #update theta
-        theta += step_size*np.linalg.inv(fisher_matrix)@value_function_gradient
-
+        update_theta = step_size*np.linalg.inv(fisher_matrix)@value_function_gradient
+        if np.isfinite(update_theta).all() == True:
+            theta += update_theta
+        else:
+            theta
 
     return theta, episode_rewards
 
@@ -108,7 +112,7 @@ def train(N, T, delta):
 
 
 if __name__ == '__main__':
-    np.random.seed(1234)
+    np.random.seed(123)
 
 
     # best_theta_so_far = None
@@ -123,7 +127,7 @@ if __name__ == '__main__':
 
     # theta = best_theta_so_far
 
-    theta, episode_rewards = train(N=100, T=100, delta=1e-2)
+    theta, episode_rewards = train(N=50, T=1000, delta=1e-3)
 
     visualize_time_length = 50
 

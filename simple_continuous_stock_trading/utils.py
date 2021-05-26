@@ -173,7 +173,7 @@ def compute_eta(delta, fisher, v_grad):
     :return: the maximum learning rate that respects the trust region size delta
     """
 
-    regularizer = 1e-6
+    regularizer = 1e-5
     denominator = np.transpose(v_grad)@np.linalg.inv(fisher)@v_grad+regularizer
 
     try:
