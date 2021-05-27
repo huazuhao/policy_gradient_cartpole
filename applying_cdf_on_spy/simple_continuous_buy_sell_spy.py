@@ -89,9 +89,17 @@ class simple_continuous_buy_sell_spy():
         execute_action = False
         execute_sell = False
         profit = 0
+        total_stock_transactions = []
             
         current_stock_price = self.index_feature_dataframe.iloc[self.current_time_index][0]
         
+        #the simulator has the ability to look into the future. 
+        max_look_ahead = 5
+        average_future_price = np.mean(self.index_feature_dataframe.iloc\
+            [self.current_time_index:self.current_time_index+max_look_ahead].to_numpy()[:,0])
+
+
+
         value_in_stock = 0
         if len(self.positions)>0:
             for position in self.positions:
@@ -120,6 +128,7 @@ class simple_continuous_buy_sell_spy():
                 self.positions.append(new_position)
                 execute_action = True
                 self.cash -= new_position['quantity']*new_position['price']
+                total_stock_transactions.append(new_position)
             else:
                 #if return_price:
                 #    print('failed to buy because we dont have enough cash left')
@@ -147,8 +156,8 @@ class simple_continuous_buy_sell_spy():
             #sell
             if len(self.positions)>0:
                 sold_position = self.positions[0]
-                if current_stock_price>sold_position['price']:
-                #if sold_position['quantity']>0:
+                #if current_stock_price>sold_position['price']:
+                if sold_position['price']>0:
                     
                     #if return_price:
                     #    print('the current portfolio is',self.positions)
@@ -157,10 +166,11 @@ class simple_continuous_buy_sell_spy():
 
                 
                     self.cash += sold_position['quantity']*current_stock_price
-                    profit += sold_position['quantity']*current_stock_price
+                    profit += sold_position['quantity']*(current_stock_price-sold_position['price'])
                     execute_action = True
                     execute_sell = True
                     self.positions.pop(0)
+                    total_stock_transactions.append(sold_position)
 
                 else:
                     #if return_price:
@@ -195,9 +205,8 @@ class simple_continuous_buy_sell_spy():
         current_percent_value_in_stock = value_in_stock/self.current_portfolio_value
         
         reward = (self.current_portfolio_value/current_stock_price)/self.buy_and_hold_stock_quantity
-        reward = reward-self.expert_reward
-        reward = 0
-
+        #reward = reward-self.expert_reward
+        #reward = 0
         #reward = profit
 
         observation = np.concatenate((observation,[[current_percent_value_in_stock]]),axis = 0)
@@ -205,11 +214,26 @@ class simple_continuous_buy_sell_spy():
         if return_price:
             return current_stock_price,observation,execute_action,need_to_buy,need_to_sell
         
-        if execute_sell:
-            return observation, reward
-        
+
+        # if execute_action:
+        #     if need_to_buy:
+        #         reward = 0
+        #         for position in total_stock_transactions:
+        #             reward += position['quantity']*(average_future_price-position['price'])
+        #         return observation,reward
+            
+        #     if need_to_sell:
+        #         reward = 0
+        #         for position in total_stock_transactions:
+        #             reward += position['quantity']*(average_future_price-position['price'])*-1
+        #         return observation,reward
+                
+
         return observation,0
 
 
     def final(self):
-        return self.current_portfolio_value
+        #return 0
+        current_stock_price = self.index_feature_dataframe.iloc[self.current_time_index][0]
+        reward = (self.current_portfolio_value/current_stock_price)/self.buy_and_hold_stock_quantity
+        return reward

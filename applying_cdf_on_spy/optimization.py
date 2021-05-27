@@ -46,15 +46,15 @@ class optimization():
         self.best_parameters_from_experiment = None
         self.global_iteration_count = 0
 
-    def load_env(self):
-        self.env = simple_continuous_buy_sell_spy.simple_continuous_buy_sell_spy()
+    # def load_env(self):
+    #     self.env = simple_continuous_buy_sell_spy.simple_continuous_buy_sell_spy()
     
     def evaluate_parameter(self,parameter, weight=None):
         total_returns = []
         
         q = multiprocessing.Queue(maxsize = self.max_worker)
 
-        for iteration_index in range(0,int(C.N_SAMPLES)):
+        for iteration_index in range(0,C.ROUNDS_OF_WORKER):
             p_list = []
             for worker in range(0,self.max_worker):
                 try:
@@ -145,8 +145,9 @@ class optimization():
 
         #now, we begin to simulate trading
         #first, initialize the observation
+        locol_env = simple_continuous_buy_sell_spy.simple_continuous_buy_sell_spy()
         this_trajectory_reward = []
-        current_feature = self.env.reset()
+        current_feature = locol_env.reset()
 
 
         for time_index in range(0,200):
@@ -161,16 +162,22 @@ class optimization():
             action = new_dist.cdf(data_point_for_copula)
 
             #apply the action to the environment
-            current_feature, reward = self.env.step(action)
+            current_feature, reward = locol_env.step(action)
 
             #record reward
             this_trajectory_reward.append(reward)
 
         #final time step
-        reward = self.env.final()
+        reward = locol_env.final()
         this_trajectory_reward.append(reward)
 
-        q.put([np.sum(this_trajectory_reward)])
+        objective = 0
+        if np.sum(this_trajectory_reward) == 0:
+            objective = 1e9*(-1) #if we have 0 transaction
+        else:
+            objective = np.sum(this_trajectory_reward)
+
+        q.put([objective])
 
 
     def init_search_space(self):
@@ -244,7 +251,7 @@ class optimization():
     def run_optimization(self):
 
 
-        self.load_env()
+        #self.load_env()
         self.init_search_space()
 
         print('Begin initialization trials')
