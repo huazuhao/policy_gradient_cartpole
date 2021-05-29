@@ -58,7 +58,7 @@ class trading_vix():
         index_feature_dataframe['vix_adj_close'] = total_data['index_adj_close'][1:]
         threshold_list = [5,6,7]
         for threshold in threshold_list:
-            counting_days = day_counter_helper(threshold)
+            counting_days = utils.day_counter_helper(vix_measure_list,threshold)
             index_feature_dataframe['days_since_'+str(threshold)] = counting_days
 
         index_feature_dataframe = index_feature_dataframe.iloc[-1000:] #there may be a vix regime change in 2018/1??
@@ -67,11 +67,12 @@ class trading_vix():
     
         #other variables
         self.current_time_index = None
-        self.current_portfolio_value = None
         self.quantity = None
         self.cash = None
         self.min_transaction_value = None
         self.buy_and_hold_stock_quantity = None
+        self.current_portfolio_value = None
+        
 
 
 
@@ -82,7 +83,9 @@ class trading_vix():
         observation = self.index_feature_dataframe.iloc[self.current_time_index][2:].to_numpy()
         observation = observation.reshape((-1,1))
         current_stock_price = self.index_feature_dataframe.iloc[self.current_time_index][0]
-        
+        returned_observation = np.concatenate((observation,[[0]]),axis = 0)
+        #returned_observation = returned_observation.astype('float64')
+
         #initialize other variables
         self.quantity = 0
         self.cash = 1e4
@@ -94,9 +97,9 @@ class trading_vix():
 
 
         if return_price:
-            return current_stock_price, np.concatenate((observation,[[0]]),axis = 0)
+            return current_stock_price, returned_observation
 
-        return np.concatenate((observation,[[0]]),axis = 0)
+        return returned_observation
 
     
     def step(self,action,return_price = False):
@@ -123,8 +126,10 @@ class trading_vix():
         if need_to_buy:
             x = Symbol('x')
             r = solve((value_in_stock+x)/(value_in_stock+x+self.cash-x) - action,x)
-            r = r[0]
+            r = float(r[0])
             if r>self.min_transaction_value:
+                if r > self.cash:
+                    r = self.cash
                 self.cash -= r
                 bought_quantity = r/current_stock_price
                 self.quantity += bought_quantity
@@ -133,15 +138,28 @@ class trading_vix():
 
         if need_to_sell:
             x = Symbol('x')
-            r = solve((value_in_stock-x)/(value_in_stock-x+self.cash) - action,x)
-            r = r[0]
+            r = solve((value_in_stock-x)/(value_in_stock-x+self.cash+x) - action,x)
+
+            # if len(r)==0 and self.cash < 1:
+            #     #sell everything
+            #     x = Symbol('x')
+            #     temp_cash = 0.01
+            #     r = solve((value_in_stock-x)/(value_in_stock-x+temp_cash+x) - action,x)
+
+            r = float(r[0])
             if r>self.min_transaction_value:
                 sold_quantity = r/current_stock_price
+                if sold_quantity > self.quantity:
+                    sold_quantity = self.quantity
                 self.quantity -= sold_quantity
+                self.cash += sold_quantity*current_stock_price
                 execute_action = True
                 execute_sell = True
-                #we also need to update the naive hold quantity
-                self.buy_and_hold_stock_quantity -= sold_quantity
+                # #we also need to update the naive hold quantity
+                # self.buy_and_hold_stock_quantity -= sold_quantity
+                # if return_price:
+                #     print('sold at least once')
+
 
 
         self.current_time_index += 1
@@ -154,15 +172,19 @@ class trading_vix():
         observation = observation.reshape((-1,1))
 
         observation = np.concatenate((observation,[[current_percent_value_in_stock]]),axis = 0)
+        #observation = observation.astype('float64')
 
         reward = (self.current_portfolio_value/current_stock_price)-self.buy_and_hold_stock_quantity
+        reward = 0
 
         if return_price:
             return current_stock_price,observation,execute_action,need_to_buy,need_to_sell
 
-        return observation,0
+
+        return observation,reward,execute_sell
 
 
     def final(self):
+        current_stock_price = self.index_feature_dataframe.iloc[self.current_time_index][0]
         reward = (self.current_portfolio_value/current_stock_price)-self.buy_and_hold_stock_quantity
         return reward
