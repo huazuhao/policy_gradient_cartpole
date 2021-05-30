@@ -97,7 +97,7 @@ class trading_vix():
 
 
         if return_price:
-            return current_stock_price, returned_observation
+            return current_stock_price, returned_observation, self.current_portfolio_value
 
         return returned_observation
 
@@ -178,7 +178,7 @@ class trading_vix():
         reward = 0
 
         if return_price:
-            return current_stock_price,observation,execute_action,need_to_buy,need_to_sell
+            return current_stock_price,observation,execute_action,need_to_buy,need_to_sell, self.current_portfolio_value
 
 
         return observation,reward,execute_sell
