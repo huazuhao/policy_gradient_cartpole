@@ -8,7 +8,7 @@ from random import randrange
 
 class simple_continuous_buy_sell_spy():
     
-    def __init__ (self,num_trajectories,mv_feature_list = [5,10,15,30,50]):
+    def __init__ (self,mv_feature_list = [5,10,15,30,50]):
         #first, load in the data
         index_data = pd.read_csv("SPY.csv")
         index_data = index_data.rename(columns = {"Date":"Date",\
@@ -21,12 +21,11 @@ class simple_continuous_buy_sell_spy():
         #build feature matrix
         index_feature_dataframe = pd.DataFrame()
         index_feature_dataframe['index_raw_price'] = index_data['index_adj_close']
-        period_list = [5,10,15]
-        for period in period_list:
+        for period in mv_feature_list:
             ewm = index_feature_dataframe['index_raw_price'].ewm(span = period).mean()
             ratio = index_feature_dataframe['index_raw_price']/ewm
             index_feature_dataframe['ewm_'+str(period)] = ratio
-        index_feature_dataframe = index_feature_dataframe.iloc[max(period_list):,:]
+        index_feature_dataframe = index_feature_dataframe.iloc[max(mv_feature_list):,:]
         
         index_feature_dataframe = index_feature_dataframe.reset_index(drop=True)
         self.index_feature_dataframe = index_feature_dataframe
@@ -39,15 +38,6 @@ class simple_continuous_buy_sell_spy():
         self.buy_and_hold_stock_quantity = None
         self.expert_reward = None
 
-        # #fix the sample
-        # self.begin_time = []
-        # for _ in range(0,num_trajectories):
-        #     possible_begin_time = randrange(0,self.index_feature_dataframe.shape[0]-500)
-        #     self.begin_time.append(possible_begin_time)
-        # self.draw_begin_time_index = 0
-
-    # def reset_sample(self):
-    #     self.draw_begin_time_index = 0
         
 
 
@@ -76,7 +66,7 @@ class simple_continuous_buy_sell_spy():
         self.current_portfolio_value = self.cash + value_in_stock
 
         if return_price:
-            return current_stock_price, np.concatenate((observation,[[0]]),axis = 0)
+            return self.current_portfolio_value,current_stock_price, np.concatenate((observation,[[0]]),axis = 0)
 
         return np.concatenate((observation,[[0]]),axis = 0)
     
@@ -147,8 +137,8 @@ class simple_continuous_buy_sell_spy():
             #sell
             if len(self.positions)>0:
                 sold_position = self.positions[0]
-                if current_stock_price>sold_position['price']:
-                #if sold_position['quantity']>0:
+                #if current_stock_price>sold_position['price']:
+                if sold_position['quantity']>0:
                     
                     #if return_price:
                     #    print('the current portfolio is',self.positions)
@@ -202,7 +192,7 @@ class simple_continuous_buy_sell_spy():
         observation = np.concatenate((observation,[[current_percent_value_in_stock]]),axis = 0)
         
         if return_price:
-            return current_stock_price,observation,execute_action,need_to_buy,need_to_sell
+            return self.current_portfolio_value,current_stock_price,observation,execute_action,need_to_buy,need_to_sell
         
         if execute_sell:
             return observation, reward

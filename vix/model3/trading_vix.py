@@ -80,9 +80,10 @@ class trading_vix():
         #pick a random starting point on the self.index_feature_dataframe
         self.current_time_index = randrange(0,self.index_feature_dataframe.shape[0]-201)
 
-        observation = self.index_feature_dataframe.iloc[self.current_time_index][2:].to_numpy()
+        observation = self.index_feature_dataframe.iloc[self.current_time_index][1:].to_numpy()
         observation = observation.reshape((-1,1))
         current_stock_price = self.index_feature_dataframe.iloc[self.current_time_index][0]
+        current_vix = self.index_feature_dataframe.iloc[self.current_time_index][1]
         returned_observation = np.concatenate((observation,[[0]]),axis = 0)
         #returned_observation = returned_observation.astype('float64')
 
@@ -97,7 +98,7 @@ class trading_vix():
 
 
         if return_price:
-            return current_stock_price, returned_observation, self.current_portfolio_value
+            return current_stock_price, returned_observation, self.current_portfolio_value, current_vix
 
         return returned_observation
 
@@ -111,6 +112,7 @@ class trading_vix():
         execute_sell = False
             
         current_stock_price = self.index_feature_dataframe.iloc[self.current_time_index][0]
+        current_vix = self.index_feature_dataframe.iloc[self.current_time_index][1]
         
         value_in_stock = self.quantity*current_stock_price
         
@@ -168,7 +170,7 @@ class trading_vix():
         self.current_portfolio_value = self.cash + value_in_stock
         current_percent_value_in_stock = value_in_stock/self.current_portfolio_value
 
-        observation = self.index_feature_dataframe.iloc[self.current_time_index][2:].to_numpy()
+        observation = self.index_feature_dataframe.iloc[self.current_time_index][1:].to_numpy()
         observation = observation.reshape((-1,1))
 
         observation = np.concatenate((observation,[[current_percent_value_in_stock]]),axis = 0)
@@ -178,7 +180,7 @@ class trading_vix():
         reward = 0
 
         if return_price:
-            return current_stock_price,observation,execute_action,need_to_buy,need_to_sell,self.current_portfolio_value,r
+            return current_stock_price,observation,execute_action,need_to_buy,need_to_sell,self.current_portfolio_value,r,current_vix
 
 
         return observation,reward,execute_sell

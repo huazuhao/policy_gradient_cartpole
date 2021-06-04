@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
 import pandas as pd
-from random import randrange
+import random
 import utils
 from sympy.solvers import solve
 from sympy import Symbol
@@ -12,7 +12,10 @@ from sympy import Symbol
 
 class trading_vix():
 
-    def __init__ (self,threshold_list = [5,6,7]):
+    def __init__ (self,seed_index,threshold_list = [5,6,7]):
+
+        np.random.seed(seed_index)
+        random.seed(seed_index)
 
         #load data
         index_data = pd.read_csv("^VIX.csv")
@@ -55,7 +58,8 @@ class trading_vix():
 
         index_feature_dataframe = pd.DataFrame()
         index_feature_dataframe['vix_price_adj_close'] = total_data['vix_price_adj_close'][1:]
-        index_feature_dataframe['vix_adj_close'] = total_data['index_adj_close'][1:]
+        #index_feature_dataframe['vix_adj_close'] = total_data['index_adj_close'][1:]
+        index_feature_dataframe['mv_ratio'] = vix_measure_list[1:]
         threshold_list = [5,6,7]
         for threshold in threshold_list:
             counting_days = utils.day_counter_helper(vix_measure_list,threshold)
@@ -78,11 +82,13 @@ class trading_vix():
 
     def reset(self,return_price = False):
         #pick a random starting point on the self.index_feature_dataframe
-        self.current_time_index = randrange(0,self.index_feature_dataframe.shape[0]-201)
+        #I pick 201 because I currently assumes to only simulate 201 trading days
+        self.current_time_index = random.randrange(0,self.index_feature_dataframe.shape[0]-201)
 
-        observation = self.index_feature_dataframe.iloc[self.current_time_index][2:].to_numpy()
+        observation = self.index_feature_dataframe.iloc[self.current_time_index][1:].to_numpy()
         observation = observation.reshape((-1,1))
         current_stock_price = self.index_feature_dataframe.iloc[self.current_time_index][0]
+        current_vix = self.index_feature_dataframe.iloc[self.current_time_index][1]
         returned_observation = np.concatenate((observation,[[0]]),axis = 0)
         #returned_observation = returned_observation.astype('float64')
 
@@ -97,7 +103,7 @@ class trading_vix():
 
 
         if return_price:
-            return current_stock_price, returned_observation, self.current_portfolio_value
+            return current_stock_price, returned_observation, self.current_portfolio_value, current_vix
 
         return returned_observation
 
@@ -111,6 +117,7 @@ class trading_vix():
         execute_sell = False
             
         current_stock_price = self.index_feature_dataframe.iloc[self.current_time_index][0]
+        current_vix = self.index_feature_dataframe.iloc[self.current_time_index][1]
         
         value_in_stock = self.quantity*current_stock_price
         
@@ -168,7 +175,7 @@ class trading_vix():
         self.current_portfolio_value = self.cash + value_in_stock
         current_percent_value_in_stock = value_in_stock/self.current_portfolio_value
 
-        observation = self.index_feature_dataframe.iloc[self.current_time_index][2:].to_numpy()
+        observation = self.index_feature_dataframe.iloc[self.current_time_index][1:].to_numpy()
         observation = observation.reshape((-1,1))
 
         observation = np.concatenate((observation,[[current_percent_value_in_stock]]),axis = 0)
@@ -178,7 +185,7 @@ class trading_vix():
         reward = 0
 
         if return_price:
-            return current_stock_price,observation,execute_action,need_to_buy,need_to_sell,self.current_portfolio_value,r
+            return current_stock_price,observation,execute_action,need_to_buy,need_to_sell,self.current_portfolio_value,r,current_vix
 
 
         return observation,reward,execute_sell
