@@ -5,7 +5,7 @@ import utils
 from torch.nn.functional import one_hot, log_softmax
 
 
-def play_episode(environment, device, action_space_size, agent, gamma, episode: int):
+def play_episode(q, parameter):
 
         """
             Plays an episode of the environment.
@@ -17,8 +17,12 @@ def play_episode(environment, device, action_space_size, agent, gamma, episode: 
                 sum_of_rewards: sum of the rewards for the episode - needed for the average over 200 episode statistic
         """
 
-        agent.to('cpu')
-        device = 'cpu'
+        environment = parameter['env']
+        device = parameter['device']
+        action_space_size = parameter['action_space_size']
+        agent = parameter['agent']
+        gamma = parameter['gamma']
+
 
         # reset the environment to a random initial state every epoch
         state = environment.reset()
@@ -34,6 +38,7 @@ def play_episode(environment, device, action_space_size, agent, gamma, episode: 
 
                 
             # get the action logits from the agent - (preferences)
+            # push state to cuda
             action_logits = agent(torch.tensor(state).float().unsqueeze(dim=0).to(device))
 
             #print('action logits is',action_logits)
@@ -66,8 +71,6 @@ def play_episode(environment, device, action_space_size, agent, gamma, episode: 
             # the episode is over
             if done:
 
-                # increment the episode
-                episode += 1
 
                 # turn the rewards we accumulated during the episode into the rewards-to-go:
                 # earlier actions are responsible for more rewards than the later taken actions
@@ -91,11 +94,6 @@ def play_episode(environment, device, action_space_size, agent, gamma, episode: 
 
                 # calculate the sum over trajectory of the weighted log-probabilities
                 sum_weighted_log_probs = torch.sum(episode_weighted_log_probs).unsqueeze(dim=0)
+                
 
-                sum_weighted_log_probs = sum_weighted_log_probs.to('cpu')
-                episode_logits = episode_logits.to('cpu')
-
-                sum_weighted_log_probs = sum_weighted_log_probs.to(device)
-                episode_logits = episode_logits.to(device)
-
-                return sum_weighted_log_probs, episode_logits, sum_of_rewards, episode
+                q.put([sum_weighted_log_probs,episode_logits,sum_of_rewards])

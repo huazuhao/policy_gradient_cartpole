@@ -34,6 +34,7 @@ class PolicyGradient:
 
         if problem == "CartPole":
             self.env = gym.make('CartPole-v1')
+            self.env.seed(0)
         else:
             raise Exception("gym environment is not correct")
         
@@ -69,6 +70,10 @@ class PolicyGradient:
              episode_logits,
              sum_of_episode_rewards,
              episode) = play_episode.play_episode(self.env,self.DEVICE,self.action_space_size,self.agent,self.GAMMA,episode)
+
+
+            episode_weighted_log_prob_trajectory = episode_weighted_log_prob_trajectory.to(self.DEVICE)
+            episode_logits = episode_logits.to(self.DEVICE)
 
             # after each episode append the sum of total rewards to the deque
             self.total_rewards.append(sum_of_episode_rewards)
