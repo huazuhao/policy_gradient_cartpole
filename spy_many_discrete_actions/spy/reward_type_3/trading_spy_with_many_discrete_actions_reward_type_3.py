@@ -101,6 +101,7 @@ class trading_spy():
         ask_price = self.ask_price_history[-1]
         bid_price = self.bid_price_history[-1]
         
+        reward = 0 #reward is the profit
 
         value_in_stock = 0
         for position in self.positions:
@@ -148,6 +149,8 @@ class trading_spy():
                     self.cash += sold_position['quantity']*bid_price
                     execute_action = True
                     execute_sell = True
+                    reward += sold_position['quantity']*(sold_position['price']-bid_price)
+                    
 
 
         self.current_time_index += 1
@@ -178,29 +181,7 @@ class trading_spy():
         observation_dict['current_portfolio_value'] = self.current_portfolio_value       
         observation_dict['action'] = action
         observation_dict['raw_price'] = price_for_percentage_computation
-
-        reward = 0
         
-        if execute_buy:
-            #reward for this action is given if the 
-            #future price is high
-            future_average_price = np.mean(self.bid_price_list[self.current_time_index:self.current_time_index+100])
-
-            if future_average_price > ask_price:
-                reward = 1*r
-            else:
-                reward = -1*r
-
-        if execute_sell:
-            #reward for this action is given if the 
-            #future price is low
-            future_average_price = np.mean(self.ask_price_list[self.current_time_index:self.current_time_index+100])
-
-            if future_average_price < bid_price:
-                reward = 1*(r*-1) #because r is negative in the case of sell
-            else:
-                reward = -1*(r*-1)
-            
 
         return observation_dict,reward,execute_action
     

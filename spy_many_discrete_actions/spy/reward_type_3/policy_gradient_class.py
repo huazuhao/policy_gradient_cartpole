@@ -6,7 +6,7 @@ import numpy as np
 import datetime
 
 import config as C
-import trading_spy_with_many_discrete_actions_reward_type_2 as stock_env
+import trading_spy_with_many_discrete_actions_reward_type_3 as stock_env
 import agent
 import utils
 import os
