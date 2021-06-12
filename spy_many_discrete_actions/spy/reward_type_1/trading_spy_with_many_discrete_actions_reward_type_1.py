@@ -52,17 +52,20 @@ class trading_spy():
         self.max_position = max_position
         self.expert_policy = None
         self.last_action = None
+        self.ask_price_history = None
+        self.bid_price_history = None
+        self.middle_price_history = None
 
     def reset(self):
 
         #pick a random starting point
         self.current_time_index = random.randrange(self.min_history_length,len(self.ask_price_list)-self.max_simulation_length)
 
-        ask_price_history = self.ask_price_list[0:self.current_time_index]
-        bid_price_history = self.bid_price_list[0:self.current_time_index]
-        ask_price = ask_price_history[-1]
-        bid_price = bid_price_history[-1]
-        middle_price_history = self.middle_price_list[0:self.current_time_index]
+        self.ask_price_history = self.ask_price_list[0:self.current_time_index+1]
+        self.bid_price_history = self.bid_price_list[0:self.current_time_index+1]
+        ask_price = self.ask_price_history[-1]
+        bid_price = self.bid_price_history[-1]
+        self.middle_price_history = self.middle_price_list[0:self.current_time_index+1]
 
         self.positions = []
         self.buy_and_hold_stock_quantity = np.floor(self.cash/ask_price)
@@ -78,7 +81,7 @@ class trading_spy():
         current_stock_portfolio_ratio = value_in_stock/self.current_portfolio_value
 
         observation_dict = {}
-        observation_dict['price_history'] = middle_price_history
+        observation_dict['price_history'] = self.middle_price_history[-1*self.min_history_length:]
         observation_dict['current_stock_ratio'] = current_stock_portfolio_ratio
         observation_dict['current_portfolio_value'] = self.current_portfolio_value
 
@@ -90,11 +93,9 @@ class trading_spy():
         execute_action = False
         execute_sell = False
 
-        ask_price_history = self.ask_price_list[0:self.current_time_index]
-        bid_price_history = self.bid_price_list[0:self.current_time_index]
-        ask_price = ask_price_history[-1]
-        bid_price = bid_price_history[-1]
-        middle_price_history = self.middle_price_list[0:self.current_time_index]
+        ask_price = self.ask_price_history[-1]
+        bid_price = self.bid_price_history[-1]
+        
 
         value_in_stock = 0
         for position in self.positions:
@@ -115,17 +116,20 @@ class trading_spy():
                     r = self.cash
                 
                 num_new_position = action-len(self.positions)
-                per_position_value = r/num_new_position
+                
+                if num_new_position > 0 :
 
-                for _ in range(0,int(num_new_position)):
-                    new_position = {}
-                    new_position['quantity'] = np.floor(per_position_value/ask_price)
-                    new_position['price'] = ask_price
-                    self.cash -= new_position['quantity']*new_position['price']
-                    self.positions.append(new_position)
-                    execute_action = True
+                    per_position_value = r/num_new_position
 
-                self.positions = sorted(self.positions,key = lambda k : k['price'])
+                    for _ in range(0,int(num_new_position)):
+                        new_position = {}
+                        new_position['quantity'] = np.floor(per_position_value/ask_price)
+                        new_position['price'] = ask_price
+                        self.cash -= new_position['quantity']*new_position['price']
+                        self.positions.append(new_position)
+                        execute_action = True
+
+                    self.positions = sorted(self.positions,key = lambda k : k['price'])
 
 
             elif r<0:
@@ -142,11 +146,16 @@ class trading_spy():
 
         self.current_time_index += 1
 
-        ask_price_history = self.ask_price_list[0:self.current_time_index]
-        bid_price_history = self.bid_price_list[0:self.current_time_index]
-        ask_price = ask_price_history[-1]
-        bid_price = bid_price_history[-1]
-        middle_price_history = self.middle_price_list[0:self.current_time_index]
+        self.ask_price_history.pop(0)
+        self.ask_price_history.append(self.ask_price_list[self.current_time_index])
+        self.bid_price_history.pop(0)
+        self.bid_price_history.append(self.bid_price_list[self.current_time_index])
+        self.middle_price_history.pop(0)
+        self.middle_price_history.append(self.middle_price_list[self.current_time_index])
+
+        ask_price = self.ask_price_history[-1]
+        bid_price = self.bid_price_history[-1]
+
 
         value_in_stock = 0
         for position in self.positions:
@@ -159,7 +168,7 @@ class trading_spy():
         reward = self.current_portfolio_value - (self.initial_portfolio_value*self.expert_policy)
 
         observation_dict = {}
-        observation_dict['price_history'] = middle_price_history
+        observation_dict['price_history'] = self.middle_price_history[-1*self.min_history_length:]
         observation_dict['current_stock_ratio'] = current_stock_portfolio_ratio 
         observation_dict['current_portfolio_value'] = self.current_portfolio_value       
         observation_dict['action'] = action
