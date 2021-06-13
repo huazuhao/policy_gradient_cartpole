@@ -136,7 +136,7 @@ class PolicyGradient:
 
                     #save the neural network in the end
                     cwd = os.getcwd()
-                    parameter_file = 'spy_reward_type_2_nn_trained_model.pt'
+                    parameter_file = 'spy_reward_type_3_nn_trained_model.pt'
                     cwd = os.path.join(cwd,parameter_file)
                     torch.save(self.agent.state_dict(),cwd)
 
@@ -147,7 +147,7 @@ class PolicyGradient:
                 #last training epoch
                 #save the neural network in the end
                 cwd = os.getcwd()
-                parameter_file = 'spy_reward_type_2_nn_trained_model.pt'
+                parameter_file = 'spy_reward_type_3_nn_trained_model.pt'
                 cwd = os.path.join(cwd,parameter_file)
                 torch.save(self.agent.state_dict(),cwd)
 
