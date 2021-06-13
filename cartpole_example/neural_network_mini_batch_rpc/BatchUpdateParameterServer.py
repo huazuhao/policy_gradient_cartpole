@@ -12,7 +12,7 @@ import utils
 class BatchUpdateParameterServer():
 
 
-    def __init__(self,batch_update_size = C.BATCH_SIZE):
+    def __init__(self,batch_update_size = C.UPDATE_SIZE):
 
 
         self.HIDDEN_SIZE = C.HIDDEN_SIZE
@@ -40,16 +40,19 @@ class BatchUpdateParameterServer():
 
     @staticmethod
     @rpc.functions.async_execution
-    def update_and_fetch_model(ps_rref, grads, reward):
+    def update_and_fetch_model(ps_rref, grads, rewards):
         self = ps_rref.local_value()
+
+        utils.timed_log(f"PS got {self.curr_update_size}/{self.batch_update_size} updates")
 
         for p, g in zip(self.model.parameters(), grads):
             p.grad += g
 
-        self.current_rewards.append(reward)
+        for reward in rewards:
+            self.current_rewards.append(reward)
+            self.curr_update_size += 1
 
         with self.lock:
-            self.curr_update_size += 1
 
             fut = self.future_model
 
@@ -61,14 +64,15 @@ class BatchUpdateParameterServer():
                 self.optimizer.step()
                 self.optimizer.zero_grad()
                 fut.set_result(self.model)
-                utils.timed_log(f"reward is {np.mean(self.current_rewards)}")
+                utils.timed_log(f"rewards length is {len(self.current_rewards)}")
+                utils.timed_log(f"average reward is {np.mean(self.current_rewards)}")
                 utils.timed_log("PS updated model")
                 self.future_model = torch.futures.Future()
                 self.current_rewards = []
 
                 #save the model
                 cwd = os.getcwd()
-                parameter_file = 'spy_reward_type_3_nn_trained_model.pt'
+                parameter_file = 'cartpole_rpc_trained_model.pt'
                 cwd = os.path.join(cwd,parameter_file)
                 torch.save(self.model.state_dict(),cwd)
 

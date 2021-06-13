@@ -29,9 +29,9 @@ def run_ps(trainers):
 
 def run(rank, world_size):
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '29505'
+    os.environ['MASTER_PORT'] = '29500'
     options=rpc.TensorPipeRpcBackendOptions(
-        num_worker_threads=30,
+        num_worker_threads=60,
         rpc_timeout=0  # infinite timeout
      )
     if rank != 0:
@@ -56,5 +56,8 @@ def run(rank, world_size):
 
 
 if __name__=="__main__":
-    world_size = C.BATCH_SIZE + 1
+
+    assert C.UPDATE_SIZE%C.BATCH_SIZE_PER_THREAD == 0
+
+    world_size = int(C.UPDATE_SIZE/C.BATCH_SIZE_PER_THREAD + 1)
     mp.spawn(run, args=(world_size, ), nprocs=world_size, join=True)
