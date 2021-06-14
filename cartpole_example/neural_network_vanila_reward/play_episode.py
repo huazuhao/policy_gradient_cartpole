@@ -17,9 +17,6 @@ def play_episode(environment, device, action_space_size, agent, gamma, episode: 
                 sum_of_rewards: sum of the rewards for the episode - needed for the average over 200 episode statistic
         """
 
-        agent.to('cpu')
-        device = 'cpu'
-
         # reset the environment to a random initial state every epoch
         state = environment.reset()
 
@@ -61,11 +58,11 @@ def play_episode(environment, device, action_space_size, agent, gamma, episode: 
                 # increment the episode
                 episode += 1
 
-                # simply compute the total reward as supposed to reward to go
-                vanila_rewards = np.ones(episode_actions.shape)*np.sum(episode_rewards)
-
                 # # calculate the sum of the rewards for the running average metric
                 sum_of_rewards = np.sum(episode_rewards)
+
+                # simply compute the total reward as supposed to reward to go
+                vanila_rewards = np.ones(episode_actions.shape)*sum_of_rewards
 
                 # set the mask for the actions taken in the episode
                 mask = one_hot(episode_actions, num_classes=environment.action_space.n)
