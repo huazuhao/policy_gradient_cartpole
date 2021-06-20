@@ -8,7 +8,7 @@ import os
 def ppo_learn(replay_buffer,replay_buffer_reward,env,model,cov_matrix,model_optim):
 
     np.random.seed(0)
-    current_best_reward = float('-inf')
+    current_best_reward = 0
 
     while True:
 
@@ -40,11 +40,11 @@ def ppo_learn(replay_buffer,replay_buffer_reward,env,model,cov_matrix,model_opti
 
         print('the current reward is',np.mean(new_sample_reward))
 
-        if np.mean(new_sample_reward) > current_best_reward:
+        if np.mean(new_sample_reward) < current_best_reward:
             current_best_reward = np.mean(new_sample_reward)
             #save the neural network model
             cwd = os.getcwd()
-            parameter_file = 'pendulum_nn_trained_model.pt'
+            parameter_file = 'pendulum_nn_trained_model_2.pt'
             cwd = os.path.join(cwd,parameter_file)
             torch.save(model.state_dict(),cwd)
 
@@ -71,9 +71,11 @@ def ppo_learn(replay_buffer,replay_buffer_reward,env,model,cov_matrix,model_opti
             for sample_index in range(0,len(sampled_off_line_data)):
                 off_line_data = sampled_off_line_data[sample_index]
 
-                actor_log_prob_mean = model(off_line_data['observation_list'])
-                dist = MultivariateNormal(actor_log_prob_mean, cov_matrix)
-                actor_log_prob = dist.log_prob(off_line_data['action_list'])
+                actor_action = model(off_line_data['observation_list'])
+                actor_log_prob = torch.log(actor_action)
+                print('actor log prob is',actor_log_prob)
+                # dist = MultivariateNormal(actor_log_prob_mean, cov_matrix)
+                # actor_log_prob = dist.log_prob(off_line_data['action_list'])
 
                 #calculate the ratio for adjusting off-line data
                 ratios = torch.exp(actor_log_prob - off_line_data['log_prob_action_list'])
@@ -93,6 +95,8 @@ def ppo_learn(replay_buffer,replay_buffer_reward,env,model,cov_matrix,model_opti
             model.zero_grad()
             total_loss.backward()
             model_optim.step()
+
+            print('finished updating the model once')
 
             # #reference here https://discuss.pytorch.org/t/why-do-we-need-to-set-the-gradients-manually-to-zero-in-pytorch/4903/20
             # model.zero_grad()
