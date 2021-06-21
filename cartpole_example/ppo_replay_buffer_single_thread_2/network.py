@@ -12,7 +12,7 @@ class Agent(nn.Module):
     def __init__(self, observation_space_size: int, action_space_size: int, hidden_size: int):
         super(Agent, self).__init__()
 
-        torch.manual_seed(0)
+        torch.manual_seed(1)
 
         self.net = nn.Sequential(
             nn.Linear(in_features=observation_space_size, out_features=hidden_size, bias=True),

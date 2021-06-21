@@ -4,14 +4,11 @@ import numpy as np
 import torch
 from torch.distributions import MultivariateNormal
 import os
-import jsonpickle
 
 def ppo_learn(replay_buffer,replay_buffer_reward,env,model,cov_matrix,model_optim):
 
     np.random.seed(0)
     current_best_reward = float('-inf')
-    global_iteration_counter = 0
-    optimization_history_list = []
 
     while True:
 
@@ -40,20 +37,8 @@ def ppo_learn(replay_buffer,replay_buffer_reward,env,model,cov_matrix,model_opti
 
             new_sample_reward.append(np.sum(reward_list))
 
-        global_iteration_counter += 1
-        print('this is global iteration ',global_iteration_counter)
+
         print('the current reward is',np.mean(new_sample_reward))
-        
-        #record the optimization process
-        optimization_history_list.append(np.mean(new_sample_reward))
-        optimization_history = {}
-        optimization_history['objective_history'] = optimization_history_list
-        cwd = os.getcwd()
-        #cwd = os.path.join(cwd, 'data_folder')
-        parameter_file = 'optimization_history.json'
-        cwd = os.path.join(cwd,parameter_file)
-        with open(cwd, 'w') as statusFile:
-            statusFile.write(jsonpickle.encode(optimization_history))
 
         if np.mean(new_sample_reward) > current_best_reward:
             current_best_reward = np.mean(new_sample_reward)

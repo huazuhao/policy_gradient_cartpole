@@ -1,5 +1,5 @@
-max_new_episode = 5
-training_batch_size = 5
+max_new_episode = 25
+training_batch_size = 25
 ppo_clip = 0.1
 
 alpha = 5e-4 #learning rate

@@ -11,13 +11,8 @@ def next_action_during_training(model,cov_matrix,state):
     #query the actor network for a mean action
     mean_action = model(state)
 
-    print('before')
-    print('cov_matrix',cov_matrix)
-    print('mean_action',mean_action)
     #create a distribution with the mean_action and some noise for exploration
     dist = MultivariateNormal(mean_action, cov_matrix)
-
-    print('after')
 
     # Sample an action from the distribution
     action = dist.sample()
