@@ -11,4 +11,4 @@ replay_buffer_size = 500
 
 #some hyperparameters for trpo
 damping = 1e-3
-max_kl = 1e-3
+max_kl = 5e-4

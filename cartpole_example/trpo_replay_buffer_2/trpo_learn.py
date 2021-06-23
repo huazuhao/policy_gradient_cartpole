@@ -5,11 +5,16 @@ import torch
 from torch.distributions import MultivariateNormal
 import os
 import utils
+import jsonpickle
+import random
 
 def trpo_learn(replay_buffer,replay_buffer_reward,env,model,cov_matrix):
 
     np.random.seed(0)
+    random.seed(0)
     current_best_reward = float('-inf')
+    global_iteration_counter = 0
+    optimization_history_list = []
 
     while True:
 
@@ -25,6 +30,8 @@ def trpo_learn(replay_buffer,replay_buffer_reward,env,model,cov_matrix):
                 drop_index = np.argmin(replay_buffer_reward)
                 replay_buffer.pop(drop_index)
                 replay_buffer_reward.pop(drop_index)
+                #replay_buffer.pop(0)
+                #replay_buffer_reward.pop(0)
 
             #add the new simulation result to the replay buffer
             total_reward = np.sum(reward_list)
@@ -38,8 +45,20 @@ def trpo_learn(replay_buffer,replay_buffer_reward,env,model,cov_matrix):
 
             new_sample_reward.append(np.sum(reward_list))
 
-
+        global_iteration_counter += 1
+        print('this is global iteration ',global_iteration_counter)
         print('the current reward is',np.mean(new_sample_reward))
+
+        #record the optimization process
+        optimization_history_list.append(np.mean(new_sample_reward))
+        optimization_history = {}
+        optimization_history['objective_history'] = optimization_history_list
+        cwd = os.getcwd()
+        #cwd = os.path.join(cwd, 'data_folder')
+        parameter_file = 'optimization_history.json'
+        cwd = os.path.join(cwd,parameter_file)
+        with open(cwd, 'w') as statusFile:
+            statusFile.write(jsonpickle.encode(optimization_history))
 
         if np.mean(new_sample_reward) > current_best_reward:
             current_best_reward = np.mean(new_sample_reward)
@@ -60,6 +79,7 @@ def trpo_learn(replay_buffer,replay_buffer_reward,env,model,cov_matrix):
             sample_probability = (np.exp(new_replay_buffer_reward))/np.sum(np.exp(new_replay_buffer_reward)) #apply softmax to the total_reward list
             sampled_off_line_data = []
             for sample_counter in range(0,C.training_batch_size):
+                # sampled_index = random.randint(0,len(replay_buffer)-1)
                 sampled_index = np.random.choice(np.arange(0, len(replay_buffer)), p=sample_probability.tolist())
                 sampled_off_line_data.append(replay_buffer[sampled_index])
 
@@ -71,17 +91,17 @@ def trpo_learn(replay_buffer,replay_buffer_reward,env,model,cov_matrix):
             total_sampled_reward = np.zeros((0))
 
             baseline_reward = 0
-            for sample_index in range(0,len(sampled_off_line_data)):
-                off_line_data = sampled_off_line_data[sample_index]
-                baseline_reward += np.sum(off_line_data['reward_list'])
-            baseline_reward = baseline_reward/len(sampled_off_line_data)
+            # for sample_index in range(0,len(sampled_off_line_data)):
+            #     off_line_data = sampled_off_line_data[sample_index]
+            #     baseline_reward += np.sum(off_line_data['reward_list'])
+            # baseline_reward = baseline_reward/len(sampled_off_line_data)
 
             for sample_index in range(0,len(sampled_off_line_data)):
                 off_line_data = sampled_off_line_data[sample_index]
                 total_sampled_observation = torch.cat((total_sampled_observation,off_line_data['observation_list']),dim = 0)
                 total_sampled_action = torch.cat((total_sampled_action,off_line_data['action_list']),dim = 0)
                 total_sampled_log_prob_action_state = torch.cat((total_sampled_log_prob_action_state,off_line_data['log_prob_action_list']),dim = 0)
-                total_sampled_reward  = np.concatenate((total_sampled_reward,np.asarray(off_line_data['reward_list'])-baseline_reward))
+                total_sampled_reward  = np.concatenate((total_sampled_reward,np.asarray(off_line_data['reward_list'])+baseline_reward))
             total_sampled_reward = torch.tensor(total_sampled_reward)
 
             #compute loss and update model with trpo
@@ -198,9 +218,9 @@ def linesearch(model,
                fullstep,
                expected_improve_rate,
                max_backtracks=10,
-               accept_ratio=.1):
+               accept_ratio=.5):
     fval = f(model).data
-    # print("\tfval before", fval.item())
+    #print("\tfval before", fval.item())
     for (_n_backtracks, stepfrac) in enumerate(.5**np.arange(max_backtracks)):
         xnew = x + stepfrac * fullstep
         utils.set_flat_params_to(model, xnew)
@@ -208,11 +228,12 @@ def linesearch(model,
         actual_improve = fval - newfval
         expected_improve = expected_improve_rate * stepfrac
         ratio = actual_improve / expected_improve
-        # print("\ta : %6.4e /e : %6.4e /r : %6.4e "%(actual_improve.item(), expected_improve.item(), ratio.item()))
+        #print("\ta : %6.4e /e : %6.4e /r : %6.4e "%(actual_improve.item(), expected_improve.item(), ratio.item()))
 
         if ratio.item() > accept_ratio and actual_improve.item() > 0:
-            # print("\tfval after", newfval.item())
-            # print("\tlog(std): %f"%xnew[0])
+            #print("\tfval after", newfval.item())
+            #print("\tlog(std): %f"%xnew[0])
+            print('update model')
             return True, xnew
     return False, x
 

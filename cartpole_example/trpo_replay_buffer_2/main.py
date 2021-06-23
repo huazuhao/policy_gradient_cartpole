@@ -24,7 +24,7 @@ if __name__ == '__main__':
                         action_space_size=action_space_size,
                         hidden_size=HIDDEN_SIZE).to(DEVICE)
 
-    #model_optim = optim.Adam(params=model.parameters(), lr=C.alpha)
+    model_optim = optim.Adam(params=model.parameters(), lr=C.alpha)
 
     #initialize other variables
     replay_buffer = []
