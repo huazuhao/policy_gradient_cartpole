@@ -16,11 +16,11 @@ class Agent(nn.Module):
 
         self.net = nn.Sequential(
             nn.Linear(in_features=observation_space_size, out_features=hidden_size, bias=True),
-            nn.PReLU(),
+            #nn.PReLU(),
             # nn.Linear(in_features=hidden_size, out_features=hidden_size, bias=True),
             # nn.PReLU(),
             nn.Linear(in_features=hidden_size, out_features=hidden_size, bias=True),
-            nn.PReLU(),
+            #nn.PReLU(),
             nn.Linear(in_features=hidden_size, out_features=action_space_size, bias=True)
         )
 
