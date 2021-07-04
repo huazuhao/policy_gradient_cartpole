@@ -21,7 +21,7 @@ def main():
     # Create the callback: check every 20000 steps
     callback = custom_call_back.CustomCallback(check_freq = 20000,log_dir = log_dir)
     # Create RL model
-    model = SAC('MlpPolicy',env,action_noise = action_noise, verbose=2,batch_size = 100000)
+    model = SAC('MlpPolicy',env,action_noise = action_noise, verbose=2,batch_size = 10000)
     # Train the agent
     model.learn(total_timesteps=int(5e9), callback=callback)
 
