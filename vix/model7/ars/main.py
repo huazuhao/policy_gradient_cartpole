@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     np.random.seed(0)
     env = trading_vix_env.trading_vix_env()
-    env = gym.make('Pendulum-v0')
+    #env = gym.make('Pendulum-v0')
     env.seed(0)
     #env = wrappers.Monitor(env, monitor_dir, force=True)
     #policy_inputs_size = env.observation_space.shape[0]

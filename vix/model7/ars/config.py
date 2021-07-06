@@ -6,7 +6,7 @@ assert max_best_sample_directions <= max_sample_directions
 learning_rate = 0.02
 max_epoch = 10000
 extracted_feature_size = 300
-max_evaluation = 30
+max_evaluation = 20
 
 max_worker = 25
 render_gym_env_frequency = 50
