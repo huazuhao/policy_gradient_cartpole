@@ -1,0 +1,1 @@
+commission_per_stock = 0.035
